@@ -36,7 +36,36 @@ find_package(PCL REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package(livox_sdk2 REQUIRED)
+# find_package(livox_sdk2 REQUIRED)
+
+
+# --- Livox SDK2 manual discovery (because SDK2 does NOT provide a CMake package) ---
+set(LIVOX_SDK2_LIB_DIR "/usr/local/lib")
+set(LIVOX_SDK2_INCLUDE_DIR "/usr/local/include")
+
+find_library(LIVOX_LIDAR_SDK_SHARED
+    NAMES livox_lidar_sdk_shared liblivox_lidar_sdk_shared.so
+    PATHS ${LIVOX_SDK2_LIB_DIR}
+)
+
+find_library(LIVOX_LIDAR_SDK_STATIC
+    NAMES livox_lidar_sdk_static liblivox_lidar_sdk_static.a
+    PATHS ${LIVOX_SDK2_LIB_DIR}
+)
+
+if(NOT LIVOX_LIDAR_SDK_SHARED AND NOT LIVOX_LIDAR_SDK_STATIC)
+    message(FATAL_ERROR "Livox SDK2 not found in /usr/local/lib")
+endif()
+
+include_directories(${LIVOX_SDK2_INCLUDE_DIR})
+
+# Use shared library by default
+set(LIVOX_SDK2_LIB ${LIVOX_LIDAR_SDK_SHARED})
+
+
+
+
+
 
 # check apr
 find_package(PkgConfig)
@@ -90,7 +119,7 @@ target_link_libraries(${PROJECT_NAME} "${cpp_typesupport_target}")
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${PCL_INCLUDE_DIRS}
   ${APR_INCLUDE_DIRS}
-  ${livox_sdk2_INCLUDE_DIRS}
+  # ${livox_sdk2_INCLUDE_DIRS}
   ${LIVOX_INTERFACES_INCLUDE_DIRECTORIES}   # for custom msgs
   3rdparty
   src
@@ -98,8 +127,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # link libraries
 target_link_libraries(${PROJECT_NAME}
-  ${livox_sdk2_LIBRARIES}
-  ${LIVOX_INTERFACE_TARGET}   # for custom msgs
+  # ${livox_sdk2_LIBRARIES}
+  # ${LIVOX_INTERFACE_TARGET}   # for custom msgs
+  ${LIVOX_SDK2_LIB}
   ${PPT_LIBRARY}
   ${Boost_LIBRARY}
   ${PCL_LIBRARIES}
